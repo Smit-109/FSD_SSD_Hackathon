@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Book from "../models/books.models.js";
+import Category from "../models/categories.models.js";
 import { uploadImage } from "../utils/imagekit.js";
 
 export async function addBook(req, res) {
@@ -28,27 +29,38 @@ export async function addBook(req, res) {
             });
         }
 
-        const image = req.file;
+        const bookCover = req.files.bookCover[0];
+        const pdf = req.files.pdf[0];
 
-        if (!image) {
-            return res.status(400).json({ 
+        if (!bookCover) {
+            return res.status(400).json({
                 success: false,
-                errorCode: "IMAGE_MISSING", 
-                message: "Book Cover Image is missing!" 
+                errorCode: "IMAGE_MISSING",
+                message: "Book Cover Image is missing!"
+            });
+        }
+
+        if (!pdf) {
+            return res.status(400).json({
+                success: false,
+                errorCode: "PDF_MISSING",
+                message: "Book PDF is missing!"
             });
         }
 
         let imageSrc;
+        let pdfSrc;
 
         try {
             // Upload to ImageKit
-            imageSrc = await uploadImage(image.path);
+            imageSrc = await uploadImage(bookCover.path);
+            pdfSrc = await uploadImage(pdf.path);
         } catch (error) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                error: error.message || error, 
-                errorCode: "IMAGEKIT_UPLOAD_ERROR", 
-                message: "An error occurred while uploading image to imagekit!" 
+                error: error.message || error,
+                errorCode: "IMAGEKIT_UPLOAD_ERROR",
+                message: "An error occurred while uploading image to imagekit!"
             });
         }
 
@@ -58,21 +70,38 @@ export async function addBook(req, res) {
             parsedTags = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags;
         }
 
+        const categoryDoc = await Category.findOne({ name: category });
+
         const book = await Book.create({
             title,
-            author,
-            description,
-            category,
-            releasedYear,
-            imageSrc,
-            rating: rating ? parseFloat(rating) : 0,
-            country: country || 'Unknown',
-            isbn,
-            pageCount: pageCount ? parseInt(pageCount) : undefined,
-            language: language || 'English',
-            publisher,
-            tags: parsedTags,
-            addedBy: req.user.id
+            author: {
+                primary: author,
+            },
+            description: {
+                short: description,
+            },
+            category: categoryDoc._id,
+            genre: category,
+            publishingInfo: {
+                publisher,
+                country: country || 'Unknown',
+            },
+            physicalInfo: {
+                pageCount: pageCount ? parseInt(pageCount) : undefined,
+                language: language || 'English',
+            },
+            files: {
+                coverImage: imageSrc,
+                pdfSrc: pdfSrc,
+            },
+            rating: {
+                average: rating ? parseFloat(rating) : 0,
+            },
+            metadata: {
+                isbn,
+                tags: parsedTags,
+                addedBy: req.user.id,
+            },
         });
 
         if (!book) {

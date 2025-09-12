@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { addBook } from "../utils/store/slices/bookSlice";
 import Toaster from "./Toaster";
 
+
 function AddBookForm() {
   const [formData, setFormData] = useState({
     title: "",
@@ -13,6 +14,7 @@ function AddBookForm() {
     rating: "",
     country: "",
     bookCover: null,
+    pdf: null,
   });
   const dispatch = useDispatch();
   const [showToaster, setShowToaster] = useState(false);
@@ -85,6 +87,7 @@ function AddBookForm() {
         rating: "",
         country: "",
         bookCover: null,
+        pdf: null,
       });
       if (coverImageInput.current) {
         coverImageInput.current.value = "";
@@ -191,6 +194,11 @@ function AddBookForm() {
               className="p-2"
               onChange={(e) => handleDataChange(e)}>
               <option>Select</option>
+              <option>Engineer</option>
+              <option>MBA</option>
+              <option>Pharmacy</option>
+              <option>Management</option>
+              <option>Science</option>
               {categories &&
                 categories.map((category) => {
                   return (
@@ -219,6 +227,16 @@ function AddBookForm() {
               onChange={(e) => handleDataChange(e)}
               type="file"
               accept="image/*"
+              className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
+            />
+          </article>
+          <article className="flex flex-col gap-y-1">
+            <label className="font-semibold">Select Book PDF</label>
+            <input
+              name="pdf"
+              onChange={(e) => handleDataChange(e)}
+              type="file"
+              accept=".pdf"
               className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
             />
           </article>

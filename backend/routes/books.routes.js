@@ -13,6 +13,6 @@ booksRouter.get("/book/:id", getBookByID);
 booksRouter.get("/:id", getBookByID); // Alternative route for book details
 
 // Protected routes - require authentication and verification (or admin)
-booksRouter.post("/add", protect, requireVerification, dynamicUpload.single('bookCover'), addBook);
+booksRouter.post("/add", protect, requireVerification, dynamicUpload.fields([{ name: 'bookCover', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), addBook);
 
 export default booksRouter;

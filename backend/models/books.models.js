@@ -70,6 +70,7 @@ const bookSchema = new mongoose.Schema({
         }
     },
     files: {
+        pdfSrc: { type: String },
         pdfPath: { type: String }, // Local file path
         epubPath: { type: String }, // If available
         audioPath: { type: String }, // If audiobook available
