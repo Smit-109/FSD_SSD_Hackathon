@@ -1,0 +1,12 @@
+This is a sample PDF file for testing the e-library system.
+
+In a real implementation, you would place your actual PDF book files here.
+
+Example books you might add:
+- Classic Literature (Pride and Prejudice, 1984, etc.)
+- Educational Materials
+- Research Papers
+- Technical Documentation
+- Fiction and Non-fiction books
+
+Make sure to follow the naming conventions outlined in the README.md file.

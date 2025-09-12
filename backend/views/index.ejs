@@ -1,0 +1,148 @@
+<%- include('./partials/header', { title: 'Home - Digital Library', user: user }) %>
+
+<div class="container container-custom">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-book-reader me-3"></i>
+                    Welcome to Digital Library
+                </h1>
+                <p class="lead mb-4">
+                    Discover a world of knowledge with our comprehensive e-library system. 
+                    Access thousands of books, manage your reading list, and explore new genres 
+                    all in one place.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/books" class="btn btn-primary-custom btn-custom btn-lg">
+                        <i class="fas fa-search me-2"></i>Browse Books
+                    </a>
+                    <% if (!user) { %>
+                    <a href="/auth/register" class="btn btn-outline-light btn-custom btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Join Now
+                    </a>
+                    <% } %>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-book-open" style="font-size: 15rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="text-center mb-5 text-white">
+                <i class="fas fa-star me-2"></i>Why Choose Our Library?
+            </h2>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-book text-primary mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Vast Collection</h5>
+                    <p class="card-text">
+                        Access thousands of books across multiple categories including fiction, 
+                        non-fiction, academic texts, and more.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-users text-success mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">User Management</h5>
+                    <p class="card-text">
+                        Verified users can access the complete library system with personalized 
+                        reading recommendations and favorites.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-cog text-warning mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Admin Control</h5>
+                    <p class="card-text">
+                        Administrators can manage user accounts, add new books, 
+                        and handle verification requests efficiently.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Books Section -->
+    <% if (recentBooks && recentBooks.length > 0) { %>
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="text-center mb-5 text-white">
+                <i class="fas fa-clock me-2"></i>Recently Added Books
+            </h2>
+        </div>
+        
+        <% recentBooks.slice(0, 3).forEach(book => { %>
+        <div class="col-md-4 mb-4">
+            <div class="card book-card card-custom h-100">
+                <% if (book.coverImage) { %>
+                <img src="<%= book.coverImage %>" class="card-img-top" alt="<%= book.title %>" style="height: 250px; object-fit: cover;">
+                <% } else { %>
+                <!-- Default placeholder image -->
+                <div class="card-img-top d-flex align-items-center justify-content-center" 
+                     style="height: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="text-center text-white">
+                        <i class="fas fa-book fa-3x mb-2"></i>
+                        <p class="mb-0 small">No Cover Available</p>
+                    </div>
+                </div>
+                <% } %>
+                
+                <div class="card-body">
+                    <h5 class="card-title"><%= book.title %></h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-user me-2"></i>by <%= book.author %>
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-1"></i><%= book.category?.name || 'Uncategorized' %>
+                        </small>
+                    </p>
+                    <a href="/books/<%= book._id %>" class="btn btn-primary-custom btn-custom">
+                        <i class="fas fa-eye me-2"></i>View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+    <% } %>
+
+    <!-- Call to Action -->
+    <% if (!user) { %>
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card card-custom bg-primary text-white text-center">
+                <div class="card-body py-5">
+                    <h3><i class="fas fa-rocket me-2"></i>Ready to Start Reading?</h3>
+                    <p class="lead mb-4">Join our community of book lovers and get access to our complete library collection.</p>
+                    <a href="/auth/register" class="btn btn-light btn-custom btn-lg me-3">
+                        <i class="fas fa-user-plus me-2"></i>Register Now
+                    </a>
+                    <a href="/auth/login" class="btn btn-outline-light btn-custom btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<%- include('./partials/footer') %>

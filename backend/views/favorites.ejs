@@ -1,0 +1,106 @@
+<%- include('./partials/header', { title: 'My Favorites - Digital Library', user: user }) %>
+
+<div class="container container-custom">
+    <div class="row">
+        <div class="col-12">
+            <div class="hero-section py-4 mb-4">
+                <h1 class="display-5 fw-bold text-center">
+                    <i class="fas fa-heart me-3"></i>My Favorite Books
+                </h1>
+                <p class="lead text-center mb-0">
+                    Your personal collection of favorite reads
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <% if (favorites && favorites.length > 0) { %>
+        <div class="row">
+            <% favorites.forEach(book => { %>
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card book-card card-custom h-100">
+                    <% if (book.coverImage) { %>
+                    <img src="<%= book.coverImage %>" class="card-img-top" alt="<%= book.title %>" 
+                         style="height: 250px; object-fit: cover;">
+                    <% } else { %>
+                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
+                         style="height: 250px;">
+                        <i class="fas fa-book fa-3x text-muted"></i>
+                    </div>
+                    <% } %>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title mb-2"><%= book.title %></h6>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-user me-1"></i>
+                            <small>by <%= book.author %></small>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i><%= book.category?.name || 'Uncategorized' %>
+                            </small>
+                            <div class="btn-group btn-group-sm">
+                                <a href="/books/<%= book._id %>" class="btn btn-primary-custom btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm" onclick="removeFavorite('<%= book._id %>')">
+                                    <i class="fas fa-heart-broken"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <!-- No Favorites -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-custom text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-heart-broken fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted">No Favorite Books Yet</h4>
+                        <p class="text-muted mb-4">
+                            Start building your personal library by adding books to your favorites. 
+                            Browse our collection and click the heart icon on books you love!
+                        </p>
+                        <a href="/books" class="btn btn-primary-custom btn-custom">
+                            <i class="fas fa-search me-2"></i>Browse Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+function removeFavorite(bookId) {
+    if (confirm('Are you sure you want to remove this book from your favorites?')) {
+        // Implement remove favorite functionality
+        fetch(`/api/v1/books/${bookId}/favorite`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to update the favorites list
+                location.reload();
+            } else {
+                alert('Failed to remove from favorites. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing favorite:', error);
+            alert('Please try again');
+        });
+    }
+}
+</script>
+
+<%- include('./partials/footer') %>

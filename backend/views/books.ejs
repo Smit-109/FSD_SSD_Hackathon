@@ -1,0 +1,310 @@
+<%- include('./partials/header', { title: 'Browse Books - Digital Library', user: user }) %>
+
+<div class="container container-custom">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section py-4">
+                <h1 class="display-5 fw-bold text-center">
+                    <i class="fas fa-book me-3"></i>Browse Our Collection
+                </h1>
+                <p class="lead text-center mb-0">
+                    Discover your next favorite book from our extensive library
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-body">
+                    <form class="row g-3" method="GET" action="/books">
+                        <div class="col-md-6">
+                            <label for="search" class="form-label">
+                                <i class="fas fa-search me-2"></i>Search Books
+                            </label>
+                            <input type="text" class="form-control search-box" id="search" name="search" 
+                                   placeholder="Search by title, author, or keyword..." 
+                                   value="<%= query?.search || '' %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-tags me-2"></i>Category
+                            </label>
+                            <select class="form-select search-box" id="category" name="category">
+                                <option value="">All Categories</option>
+                                <option value="fiction" <%= (query?.category === 'fiction') ? 'selected' : '' %>>Fiction</option>
+                                <option value="non-fiction" <%= (query?.category === 'non-fiction') ? 'selected' : '' %>>Non-Fiction</option>
+                                <option value="science" <%= (query?.category === 'science') ? 'selected' : '' %>>Science</option>
+                                <option value="technology" <%= (query?.category === 'technology') ? 'selected' : '' %>>Technology</option>
+                                <option value="history" <%= (query?.category === 'history') ? 'selected' : '' %>>History</option>
+                                <option value="biography" <%= (query?.category === 'biography') ? 'selected' : '' %>>Biography</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sort" class="form-label">
+                                <i class="fas fa-sort me-2"></i>Sort By
+                            </label>
+                            <select class="form-select search-box" id="sort" name="sort">
+                                <option value="title" <%= (query?.sort === 'title') ? 'selected' : '' %>>Title A-Z</option>
+                                <option value="-title" <%= (query?.sort === '-title') ? 'selected' : '' %>>Title Z-A</option>
+                                <option value="author" <%= (query?.sort === 'author') ? 'selected' : '' %>>Author A-Z</option>
+                                <option value="-createdAt" <%= (query?.sort === '-createdAt') ? 'selected' : '' %>>Newest First</option>
+                                <option value="createdAt" <%= (query?.sort === 'createdAt') ? 'selected' : '' %>>Oldest First</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary-custom btn-custom me-2">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                            <a href="/books" class="btn btn-outline-secondary btn-custom">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="row">
+        <% if (books && books.length > 0) { %>
+            <% books.forEach(book => { %>
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card book-card card-custom h-100">
+                    <% if (book.coverImage) { %>
+                    <img src="<%= book.coverImage %>" class="card-img-top" alt="<%= book.title %>" 
+                         style="height: 250px; object-fit: cover;">
+                    <% } else { %>
+                    <!-- Beautiful default cover without requiring image files -->
+                    <div class="card-img-top d-flex align-items-center justify-content-center" 
+                         style="height: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="text-center text-white">
+                            <i class="fas fa-book-open fa-3x mb-2"></i>
+                            <p class="mb-0 small fw-bold px-2"><%= book.title.length > 20 ? book.title.substring(0, 20) + '...' : book.title %></p>
+                        </div>
+                    </div>
+                    <% } %>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title mb-2"><%= book.title %></h6>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-user me-1"></i>
+                            <small>by <%= book.author %></small>
+                        </p>
+                        <p class="card-text flex-grow-1">
+                            <small class="text-muted">
+                                <%= book.description ? book.description.substring(0, 100) + '...' : 'No description available' %>
+                            </small>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i><%= book.category?.name || 'Uncategorized' %>
+                            </small>
+                            <div class="btn-group btn-group-sm">
+                                <a href="/books/<%= book._id %>" class="btn btn-primary-custom btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <% if (user) { %>
+                                <button class="btn btn-outline-danger btn-sm" onclick="toggleFavorite('<%= book._id %>')">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        <% } else { %>
+            <!-- No Books Found -->
+            <div class="col-12">
+                <div class="card card-custom text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted">No Books Found</h4>
+                        <p class="text-muted mb-4">
+                            We couldn't find any books matching your search criteria. 
+                            Try adjusting your filters or search terms.
+                        </p>
+                        <a href="/books" class="btn btn-primary-custom btn-custom">
+                            <i class="fas fa-refresh me-2"></i>View All Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Sample Books (Demo Data) -->
+    <% if (!books || books.length === 0) { %>
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h3 class="text-white text-center">
+                <i class="fas fa-star me-2"></i>Featured Books
+            </h3>
+        </div>
+        
+        <% 
+        const sampleBooks = [
+            {
+                _id: '1',
+                title: 'The Great Gatsby',
+                author: 'F. Scott Fitzgerald',
+                category: { name: 'Fiction' },
+                description: 'A classic American novel about the Jazz Age and the American Dream.',
+                coverImage: null
+            },
+            {
+                _id: '2',
+                title: 'To Kill a Mockingbird',
+                author: 'Harper Lee',
+                category: { name: 'Fiction' },
+                description: 'A gripping tale of racial injustice and loss of innocence.',
+                coverImage: null
+            },
+            {
+                _id: '3',
+                title: '1984',
+                author: 'George Orwell',
+                category: { name: 'Science Fiction' },
+                description: 'A dystopian social science fiction novel about totalitarian control.',
+                coverImage: null
+            },
+            {
+                _id: '4',
+                title: 'Pride and Prejudice',
+                author: 'Jane Austen',
+                category: { name: 'Romance' },
+                description: 'A romantic novel about manners, upbringing, and marriage.',
+                coverImage: null
+            },
+            {
+                _id: '5',
+                title: 'The Catcher in the Rye',
+                author: 'J.D. Salinger',
+                category: { name: 'Fiction' },
+                description: 'A coming-of-age story about teenage rebellion and alienation.',
+                coverImage: null
+            },
+            {
+                _id: '6',
+                title: 'Harry Potter and the Philosopher\'s Stone',
+                author: 'J.K. Rowling',
+                category: { name: 'Fantasy' },
+                description: 'The first book in the magical Harry Potter series.',
+                coverImage: null
+            }
+        ];
+        %>
+        
+        <% sampleBooks.forEach(book => { %>
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card book-card card-custom h-100">
+                <!-- Attractive gradient cover for sample books -->
+                <div class="card-img-top d-flex align-items-center justify-content-center position-relative" 
+                     style="height: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="text-center text-white">
+                        <i class="fas fa-book-open fa-3x mb-2"></i>
+                        <p class="mb-0 small fw-bold px-2"><%= book.title.length > 20 ? book.title.substring(0, 20) + '...' : book.title %></p>
+                    </div>
+                    <!-- Decorative corner -->
+                    <div class="position-absolute top-0 end-0 p-2">
+                        <i class="fas fa-star text-warning opacity-50"></i>
+                    </div>
+                </div>
+                
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title mb-2"><%= book.title %></h6>
+                    <p class="card-text text-muted mb-2">
+                        <i class="fas fa-user me-1"></i>
+                        <small>by <%= book.author %></small>
+                    </p>
+                    <p class="card-text flex-grow-1">
+                        <small class="text-muted">
+                            <%= book.description %>
+                        </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-1"></i><%= book.category.name %>
+                        </small>
+                        <div class="btn-group btn-group-sm">
+                            <a href="/books/<%= book._id %>" class="btn btn-primary-custom btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <% if (user) { %>
+                            <button class="btn btn-outline-danger btn-sm" onclick="toggleFavorite('<%= book._id %>')">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+    <% } %>
+
+    <!-- Pagination -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Books pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFavorite(bookId) {
+    <% if (user) { %>
+        // Implement favorite toggle functionality
+        fetch(`/api/v1/books/${bookId}/favorite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Toggle heart icon color
+                const button = event.target.closest('button');
+                const icon = button.querySelector('i');
+                icon.classList.toggle('text-danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error toggling favorite:', error);
+            alert('Please try again');
+        });
+    <% } else { %>
+        alert('Please login to add favorites');
+        window.location.href = '/auth/login';
+    <% } %>
+}
+</script>
+
+<%- include('./partials/footer') %>
