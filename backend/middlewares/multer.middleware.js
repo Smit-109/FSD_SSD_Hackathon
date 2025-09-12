@@ -1,10 +1,18 @@
 import multer from "multer";
-import { join } from 'path';
-import fs from 'fs';
+import path from "path";
+import fs from "fs";
+
+// Define base upload directory
+const baseUploadDir = path.join(process.cwd(), 'backend', 'public', 'books');
 
 // Ensure upload directories exist
-const uploadDirs = ['./public/books/covers', './public/books/pdfs'];
-uploadDirs.forEach(dir => {
+const uploadDirs = {
+    bookCover: path.join(baseUploadDir, 'covers'),
+    pdf: path.join(baseUploadDir, 'pdfs')
+};
+
+// Create directories if they don't exist
+Object.values(uploadDirs).forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
@@ -12,16 +20,16 @@ uploadDirs.forEach(dir => {
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Store different file types in different folders
-        const dest = file.fieldname === 'bookCover' 
-            ? './public/books/covers'
-            : './public/books/pdfs';
-        cb(null, dest);
+        const uploadPath = uploadDirs[file.fieldname];
+        if (!uploadPath) {
+            cb(new Error(`Invalid field name: ${file.fieldname}`));
+            return;
+        }
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = file.originalname.split('.').pop();
-        cb(null, `${file.fieldname}-${uniqueSuffix}.${ext}`);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
@@ -40,7 +48,7 @@ const fileFilter = (req, file, cb) => {
     const fileConfig = allowedFiles[file.fieldname];
     
     if (!fileConfig) {
-        cb(new Error(`Unexpected field: ${file.fieldname}`));
+        cb(new Error(`Invalid field name: ${file.fieldname}`));
         return;
     }
 

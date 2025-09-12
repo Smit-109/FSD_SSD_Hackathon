@@ -23,24 +23,24 @@ const connectDB = async (retries = 5) => {
                 heartbeatFrequencyMS: 2000, // Check connection every 2s
             });
 
-            console.log(`✅ MongoDB Connected: ${conn.connection.host}:${conn.connection.port}/${conn.connection.name}`);
+            console.log(`MongoDB Connected: ${conn.connection.host}:${conn.connection.port}/${conn.connection.name}`);
             
             // Log database statistics
             const stats = await mongoose.connection.db.stats();
-            console.log(`📊 Database Stats: ${stats.collections} collections, ${stats.objects} documents`);
+            console.log(`Database Stats: ${stats.collections} collections, ${stats.objects} documents`);
             
             return conn;
         } catch (error) {
-            console.error(`❌ MongoDB connection attempt ${i + 1} failed:`, error.message);
+            console.error(`MongoDB connection attempt ${i + 1} failed:`, error.message);
             
             if (i === retries - 1) {
-                console.error('❌ All MongoDB connection attempts failed. Exiting...');
+                console.error('All MongoDB connection attempts failed. Exiting...');
                 process.exit(1);
             }
             
             // Wait before retrying (exponential backoff)
             const delay = Math.pow(2, i) * 1000;
-            console.log(`⏳ Retrying in ${delay / 1000}s...`);
+            console.log(`Retrying in ${delay / 1000}s...`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
@@ -49,22 +49,22 @@ const connectDB = async (retries = 5) => {
 // Graceful shutdown
 const gracefulShutdown = () => {
     mongoose.connection.close(() => {
-        console.log('🔌 MongoDB connection closed through app termination');
+        console.log('MongoDB connection closed through app termination');
         process.exit(0);
     });
 };
 
 // Handle connection events
 mongoose.connection.on('connected', () => {
-    console.log('🟢 Mongoose connected to MongoDB');
+    console.log('Mongoose connected to MongoDB');
 });
 
 mongoose.connection.on('error', (err) => {
-    console.error('🔴 Mongoose connection error:', err);
+    console.error('Mongoose connection error:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('🟡 Mongoose disconnected from MongoDB');
+    console.log('Mongoose disconnected from MongoDB');
 });
 
 // Handle process termination
@@ -79,7 +79,7 @@ const seedDatabase = async () => {
         const adminExists = await User.findOne({ role: 'admin' });
         
         if (!adminExists) {
-            console.log('🌱 Seeding admin user...');
+            console.log('Seeding admin user...');
             
             const adminUser = new User({
                 fullName: 'System Administrator',
@@ -92,14 +92,14 @@ const seedDatabase = async () => {
             });
             
             await adminUser.save();
-            console.log('✅ Admin user created successfully');
+            console.log('Admin user created successfully');
         }
         
         // Check if demo user exists
         const demoUserExists = await User.findOne({ email: 'user@library.com' });
         
         if (!demoUserExists) {
-            console.log('🌱 Seeding demo user...');
+            console.log('Seeding demo user...');
             
             const demoUser = new User({
                 fullName: 'Demo User',
@@ -112,14 +112,14 @@ const seedDatabase = async () => {
             });
             
             await demoUser.save();
-            console.log('✅ Demo user created successfully');
+            console.log('Demo user created successfully');
         }
         
         // Check if default categories exist
         const categoryCount = await Category.countDocuments();
         
         if (categoryCount === 0) {
-            console.log('🌱 Seeding default categories...');
+            console.log('Seeding default categories...');
             
             const defaultCategories = [
                 { name: 'Fiction', description: 'Fictional books and novels', icon: 'fas fa-book-open', color: '#e74c3c', createdBy: null },
@@ -141,13 +141,13 @@ const seedDatabase = async () => {
                 await category.save();
             }
             
-            console.log('✅ Default categories created successfully');
+            console.log('Default categories created successfully');
         }
         
-        console.log('🎉 Database seeding completed!');
+        console.log('Database seeding completed!');
         
     } catch (error) {
-        console.error('❌ Database seeding failed:', error);
+        console.error('Database seeding failed:', error);
     }
 };
 

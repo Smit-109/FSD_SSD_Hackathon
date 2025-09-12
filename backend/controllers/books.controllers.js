@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Book from "../models/books.models.js";
 import Category from "../models/categories.models.js";
-import { uploadImage } from "../utils/imagekit.js";
+import { storeFile, deleteFile } from "../utils/fileStorage.js";
 
 import fs from 'fs/promises';
 
@@ -48,26 +48,14 @@ export async function addBook(req, res) {
 
         const bookCover = req.files.bookCover[0];
         const pdf = req.files.pdf[0];
+
+        // Calculate relative paths for storage
+        const coverPath = `/books/covers/${bookCover.filename}`;
+        const pdfPath = `/books/pdfs/${pdf.filename}`;
         
-        // Track uploaded files for cleanup
-        uploadedFiles.push(bookCover.path, pdf.path);
-
-        let imageSrc;
-        let pdfSrc;
-
-        try {
-            // Upload to ImageKit
-            [imageSrc, pdfSrc] = await Promise.all([
-                uploadImage(bookCover.path),
-                uploadImage(pdf.path)
-            ]);
-        } catch (error) {
-            throw {
-                status: 400,
-                code: "IMAGEKIT_UPLOAD_ERROR",
-                message: "Failed to upload files to storage"
-            };
-        }
+        // Add /public prefix for static file serving
+        const imageSrc = `/public${coverPath}`;
+        const pdfSrc = `/public${pdfPath}`;
 
         // Parse tags if provided as string
         let parsedTags = [];
@@ -75,7 +63,17 @@ export async function addBook(req, res) {
             parsedTags = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags;
         }
 
-        const categoryDoc = await Category.findOne({ name: category });
+        // Find or create the category
+        let categoryDoc = await Category.findOne({ 
+            name: { $regex: new RegExp(`^${category}$`, 'i') } 
+        });
+
+        if (!categoryDoc) {
+            categoryDoc = await Category.create({
+                name: category,
+                slug: category.toLowerCase().replace(/\s+/g, '-')
+            });
+        }
 
         const book = await Book.create({
             title,
@@ -90,6 +88,7 @@ export async function addBook(req, res) {
             publishingInfo: {
                 publisher,
                 country: country || 'Unknown',
+                year: parseInt(releasedYear)
             },
             physicalInfo: {
                 pageCount: pageCount ? parseInt(pageCount) : undefined,
@@ -97,16 +96,26 @@ export async function addBook(req, res) {
             },
             files: {
                 coverImage: imageSrc,
-                pdfSrc: pdfSrc,
+                pdf: pdfSrc
             },
             rating: {
                 average: rating ? parseFloat(rating) : 0,
+                count: 0,
+                breakdown: {
+                    five: 0,
+                    four: 0,
+                    three: 0,
+                    two: 0,
+                    one: 0
+                }
             },
             metadata: {
                 isbn,
                 tags: parsedTags,
-                addedBy: req.user.id,
-            },
+                addedBy: req.user._id, // Add user ID in metadata
+                featured: false,
+                newRelease: true
+            }
         });
 
         if (!book) {
@@ -117,13 +126,13 @@ export async function addBook(req, res) {
             });
         }
 
-        // Populate addedBy field
-        await book.populate('addedBy', 'fullName email');
+        // Populate the metadata.addedBy field with user details
+        const populatedBook = await Book.findById(book._id).populate('metadata.addedBy', 'fullName email');
 
         res.status(201).json({ 
             success: true,
             message: "Book added successfully",
-            data: book 
+            data: populatedBook
         });
     } catch (error) {
         return res.status(error.status || 500).json({ 
@@ -132,13 +141,6 @@ export async function addBook(req, res) {
             errorCode: error.code || "ADD_BOOK_ERROR", 
             message: error.message || "An error occurred while adding book!" 
         });
-    } finally {
-        // Clean up uploaded files
-        if (uploadedFiles.length > 0) {
-            Promise.all(uploadedFiles.map(file => 
-                fs.unlink(file).catch(() => {/* ignore cleanup errors */})
-            ));
-        }
     }
 }
 
@@ -182,17 +184,30 @@ export async function getAllBooks(req, res) {
         }
 
         const books = await Book.find(query)
-            .populate('addedBy', 'fullName email')
+            .populate('category', 'name')
+            .populate('metadata.addedBy', 'fullName email')
             .sort(sortOption)
             .limit(limit * 1)
             .skip((page - 1) * limit)
+            .lean()
             .exec();
+
+        // Map the books to match frontend expectations
+        const mappedBooks = books.map(book => ({
+            _id: book._id,
+            title: book.title,
+            author: book.author.primary,
+            category: book.category?.name || book.genre,
+            imageSrc: book.files?.coverImage ? `/public${book.files.coverImage}` : null,
+            description: book.description?.short,
+            rating: book.rating?.average || 0
+        }));
 
         const total = await Book.countDocuments(query);
 
         res.status(200).json({ 
             success: true,
-            data: books,
+            data: mappedBooks,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(total / limit),

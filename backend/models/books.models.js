@@ -166,7 +166,9 @@ bookSchema.index({
 
 // Virtual for formatted rating
 bookSchema.virtual('formattedRating').get(function() {
-    return this.rating ? this.rating.toFixed(1) : '0.0';
+    return this.rating && typeof this.rating.average === 'number' 
+        ? this.rating.average.toFixed(1) 
+        : '0.0';
 });
 
 // Virtual for age of book

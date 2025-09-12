@@ -136,7 +136,7 @@ function AddBookForm() {
       }
     }
 
-    if (formData.category === "Select") {
+    if (!formData.category) {
       showToasterPopUp("Please select a valid category!", "text-red-400");
       return true;
     }
@@ -251,21 +251,12 @@ function AddBookForm() {
               value={formData.category}
               className="p-2"
               onChange={(e) => handleDataChange(e)}>
-              <option>Select</option>
-              <option>Engineer</option>
-              <option>MBA</option>
-              <option>Pharmacy</option>
-              <option>Management</option>
-              <option>Science</option>
-              {categories &&
-                categories.map((category) => {
-                  return (
-                    <option key={category._id}>
-                      {category.name.slice(0, 1).toUpperCase() +
-                        category.name.slice(1)}
-                    </option>
-                  );
-                })}
+              <option value="">Select Category</option>
+              {categories && categories.map((category) => (
+                <option key={category._id} value={category.name}>
+                  {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                </option>
+              ))}
             </select>
           </article>
           <article className="flex flex-col gap-y-1">
