@@ -3,7 +3,10 @@ import Book from "../models/books.models.js";
 import Category from "../models/categories.models.js";
 import { uploadImage } from "../utils/imagekit.js";
 
+import fs from 'fs/promises';
+
 export async function addBook(req, res) {
+    const uploadedFiles = [];
     try {
         const { 
             title, 
@@ -20,48 +23,50 @@ export async function addBook(req, res) {
             tags
         } = req.body;
 
-        // Check required fields
-        if ([title, author, description, category, releasedYear].some(item => !item || item.trim() === "")) {
+        // Validate required fields
+        const requiredFields = { title, author, description, category, releasedYear };
+        const missingFields = Object.entries(requiredFields)
+            .filter(([_, value]) => !value || value.trim() === "")
+            .map(([field]) => field);
+
+        if (missingFields.length > 0) {
             return res.status(400).json({ 
                 success: false,
                 errorCode: "FIELDS_MISSING", 
-                message: "Required fields are missing!" 
+                message: `Required fields missing: ${missingFields.join(', ')}` 
+            });
+        }
+
+        // Validate files
+        if (!req.files?.bookCover?.[0] || !req.files?.pdf?.[0]) {
+            return res.status(400).json({
+                success: false,
+                errorCode: "FILES_MISSING",
+                message: "Both book cover and PDF files are required!"
             });
         }
 
         const bookCover = req.files.bookCover[0];
         const pdf = req.files.pdf[0];
-
-        if (!bookCover) {
-            return res.status(400).json({
-                success: false,
-                errorCode: "IMAGE_MISSING",
-                message: "Book Cover Image is missing!"
-            });
-        }
-
-        if (!pdf) {
-            return res.status(400).json({
-                success: false,
-                errorCode: "PDF_MISSING",
-                message: "Book PDF is missing!"
-            });
-        }
+        
+        // Track uploaded files for cleanup
+        uploadedFiles.push(bookCover.path, pdf.path);
 
         let imageSrc;
         let pdfSrc;
 
         try {
             // Upload to ImageKit
-            imageSrc = await uploadImage(bookCover.path);
-            pdfSrc = await uploadImage(pdf.path);
+            [imageSrc, pdfSrc] = await Promise.all([
+                uploadImage(bookCover.path),
+                uploadImage(pdf.path)
+            ]);
         } catch (error) {
-            return res.status(400).json({
-                success: false,
-                error: error.message || error,
-                errorCode: "IMAGEKIT_UPLOAD_ERROR",
-                message: "An error occurred while uploading image to imagekit!"
-            });
+            throw {
+                status: 400,
+                code: "IMAGEKIT_UPLOAD_ERROR",
+                message: "Failed to upload files to storage"
+            };
         }
 
         // Parse tags if provided as string
@@ -121,12 +126,19 @@ export async function addBook(req, res) {
             data: book 
         });
     } catch (error) {
-        return res.status(500).json({ 
+        return res.status(error.status || 500).json({ 
             success: false,
             error: error.message || error, 
-            errorCode: "ADD_BOOK_ERROR", 
-            message: "An error occurred while adding book!" 
+            errorCode: error.code || "ADD_BOOK_ERROR", 
+            message: error.message || "An error occurred while adding book!" 
         });
+    } finally {
+        // Clean up uploaded files
+        if (uploadedFiles.length > 0) {
+            Promise.all(uploadedFiles.map(file => 
+                fs.unlink(file).catch(() => {/* ignore cleanup errors */})
+            ));
+        }
     }
 }
 

@@ -65,19 +65,28 @@ function AddBookForm() {
   }
 
   async function addNewBook(data) {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch(`${baseUrl}/api/v1/books/add`, {
-      method: "POST",
-      body: data,
-    });
+      const res = await fetch(`${baseUrl}/api/v1/books/add`, {
+        method: "POST",
+        body: data,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          // Don't set Content-Type header, let browser set it with boundary for FormData
+        },
+        credentials: 'include' // Include cookies if any
+      });
 
-    setLoading(false);
+      const response = await res.json();
 
-    const book = await res.json();
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to add book');
+      }
 
-    if (book.status === "success") {
-      showToasterPopUp("Book added successfully !", "text-green-400");
+      showToasterPopUp("Book added successfully!", "text-green-400");
+      
+      // Reset form
       setFormData({
         title: "",
         author: "",
@@ -89,50 +98,99 @@ function AddBookForm() {
         bookCover: null,
         pdf: null,
       });
+
+      // Reset file inputs
       if (coverImageInput.current) {
         coverImageInput.current.value = "";
       }
-    }
 
-    dispatch(addBook(book.data));
+      // Dispatch to Redux store
+      dispatch(addBook(response.data));
+
+    } catch (error) {
+      showToasterPopUp(
+        error.message || "Failed to add book. Please try again.",
+        "text-red-400"
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   function validateData(formData) {
-    if (
-      [
-        formData.title,
-        formData.author,
-        formData.description,
-        formData.category,
-        formData.releasedYear,
-        formData.rating,
-        formData.country,
-      ].some((item) => item.trim() === "")
-    ) {
-      showToasterPopUp("Fields are missing !", "text-red-400");
-      return true;
+    // Required fields validation
+    const requiredFields = {
+      title: "Title",
+      author: "Author",
+      description: "Description",
+      category: "Category",
+      releasedYear: "Released Year",
+      rating: "Rating",
+      country: "Country"
+    };
+
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!formData[field] || formData[field].trim() === "") {
+        showToasterPopUp(`${label} is required!`, "text-red-400");
+        return true;
+      }
     }
 
     if (formData.category === "Select") {
-      showToasterPopUp("Category is missing !", "text-red-400");
+      showToasterPopUp("Please select a valid category!", "text-red-400");
       return true;
     }
 
+    // Book cover validation
     if (!formData.bookCover) {
-      showToasterPopUp("Book Cover Image is missing !", "text-red-400");
+      showToasterPopUp("Book Cover Image is required!", "text-red-400");
       return true;
     }
 
     if (!formData.bookCover.type.startsWith("image")) {
-      showToasterPopUp("Book Cover should be an image !", "text-red-400");
+      showToasterPopUp("Book Cover must be an image file!", "text-red-400");
+      return true;
+    }
+
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedImageTypes.includes(formData.bookCover.type)) {
+      showToasterPopUp("Book Cover must be JPG, PNG or WebP!", "text-red-400");
       return true;
     }
 
     if (formData.bookCover.size > 5 * 1024 * 1024) {
-      showToasterPopUp(
-        "Book Cover image can be upto 5mb size only !",
-        "text-red-400"
-      );
+      showToasterPopUp("Book Cover must be less than 5MB!", "text-red-400");
+      return true;
+    }
+
+    // PDF validation
+    if (!formData.pdf) {
+      showToasterPopUp("Book PDF is required!", "text-red-400");
+      return true;
+    }
+
+    if (formData.pdf.type !== 'application/pdf') {
+      showToasterPopUp("Book file must be a PDF!", "text-red-400");
+      return true;
+    }
+
+    if (formData.pdf.size > 50 * 1024 * 1024) {
+      showToasterPopUp("PDF file must be less than 50MB!", "text-red-400");
+      return true;
+    }
+
+    // Rating validation
+    const rating = parseFloat(formData.rating);
+    if (isNaN(rating) || rating < 0 || rating > 5) {
+      showToasterPopUp("Rating must be between 0 and 5!", "text-red-400");
+      return true;
+    }
+
+    // Year validation
+    const year = parseInt(formData.releasedYear);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(year) || year < 1800 || year > currentYear) {
+      showToasterPopUp(`Year must be between 1800 and ${currentYear}!`, "text-red-400");
       return true;
     }
 

@@ -90,14 +90,26 @@ server.get('/api/health', (req, res) => {
     });
 });
 
-    // Import web routes
+    // Mount API routes
+    server.use("/api/v1/books", booksRouter);
+    server.use("/api/v1/categories", categoriesRouter);
+    server.use("/api/v1/auth", authRouter);
+    
+    // Import and mount web routes
     const webRouter = await import("./routes/web.routes.js");
     const fileRouter = await import("./routes/files.routes.js");
 
-    // Web routes (EJS pages) - Mount before API routes
+    // Web routes (EJS pages)
     server.use("/", webRouter.default);
+    server.use("/files", fileRouter.default);
 
-    // File serving routes
+    // Not found handler
+    server.use((req, res) => {
+        res.status(404).json({
+            success: false,
+            message: 'Route not found'
+        });
+    });
     server.use("/files", fileRouter.default);
 
     // API Routes
