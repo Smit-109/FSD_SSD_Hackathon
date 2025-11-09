@@ -1,11 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Provider } from 'react-redux'
+import bookStore from './utils/store/bookStore'
 import App from './App.jsx'
 import { createBrowserRouter } from "react-router-dom";
 import HomePage from './pages/HomePage.jsx';
 import BrowseBooks from "./components/BrowseBooks.jsx";
 import BookDetails from "./components/BookDetails.jsx";
 import AddBookForm from './components/AddBookForm.jsx';
+import EditBookForm from './components/EditBookForm.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
@@ -31,6 +34,14 @@ const appRouter = createBrowserRouter([
       {
         path: "/books/:category/:bookId",
         element: <BookDetails />
+      },
+      {
+        path: "/books/edit/:bookId",
+        element: (
+          <ProtectedRoute requireAdmin={true}>
+            <EditBookForm />
+          </ProtectedRoute>
+        )
       },
       {
         path: "/login",
@@ -79,6 +90,8 @@ const appRouter = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={appRouter} />
-  </StrictMode>,
+    <Provider store={bookStore}>
+      <RouterProvider router={appRouter} />
+    </Provider>
+  </StrictMode>
 )

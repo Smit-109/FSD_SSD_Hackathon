@@ -96,11 +96,11 @@ function Footer() {
                             </div>
                             <div className="flex items-center space-x-3 text-sm text-gray-300">
                                 <Phone className="h-4 w-4 text-primary-400" />
-                                <span>+1 (555) 123-4567</span>
+                                <span>+91 6355094230</span>
                             </div>
                             <div className="flex items-center space-x-3 text-sm text-gray-300">
                                 <MapPin className="h-4 w-4 text-primary-400" />
-                                <span>123 Library St, Book City</span>
+                                <span>123 Library St,Ahmedabad</span>
                             </div>
                         </div>
                     </div>

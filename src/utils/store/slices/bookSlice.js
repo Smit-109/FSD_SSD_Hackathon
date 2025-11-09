@@ -6,6 +6,8 @@ const bookSlice = createSlice({
     name: "book",
     initialState: {
         books: [],
+        loading: false,
+        error: null
     },
     reducers: {
         getBooks: (state, action) => {
@@ -16,9 +18,15 @@ const bookSlice = createSlice({
         },
         addBook: (state, action) => {
             state.books.unshift(action.payload);
+        },
+        setLoading: (state, action) => {
+            state.loading = action.payload;
+        },
+        setError: (state, action) => {
+            state.error = action.payload;
         }
     }
 });
 
-export const { getBooks, addBook, updateBooks } = bookSlice.actions;
+export const { getBooks, addBook, updateBooks, setLoading, setError } = bookSlice.actions;
 export default bookSlice.reducer;

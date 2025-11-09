@@ -6,21 +6,21 @@ function Hero() {
   const { isAuthenticated, user } = useAuth();
 
   return (
-    <section className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8">
       {/* Background Elements */}
-      <div className="absolute inset-0 bg-mesh"></div>
-      <div className="absolute top-10 left-10 w-20 h-20 bg-primary-200 rounded-full opacity-50 animate-pulse"></div>
-      <div className="absolute bottom-10 right-10 w-32 h-32 bg-secondary-200 rounded-full opacity-30 animate-pulse delay-1000"></div>
-      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-primary-300 rounded-full opacity-40 animate-pulse delay-500"></div>
+      <div className="absolute inset-0 bg-mesh opacity-75"></div>
+      <div className="absolute top-10 left-10 w-24 h-24 bg-primary-200 rounded-full opacity-40 animate-pulse"></div>
+      <div className="absolute bottom-10 right-10 w-36 h-36 bg-secondary-200 rounded-full opacity-30 animate-pulse delay-1000"></div>
+      <div className="absolute top-1/2 left-1/4 w-20 h-20 bg-primary-300 rounded-full opacity-30 animate-pulse delay-500"></div>
       
-      <div className="relative max-w-7xl mx-auto">
+      <div className="relative max-w-6xl mx-auto">
         <div className="text-center">
           {/* Main Heading */}
-          <h1 className="text-4xl md:text-6xl font-bold text-dark-900 mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-dark-900 mb-8 leading-tight">
             Your{' '}
             <span className="gradient-text">Digital Library</span>
             <br />
-            <span className="text-3xl md:text-5xl">Anytime, Anywhere</span>
+            <span className="text-4xl md:text-6xl mt-4 block">Anytime, Anywhere</span>
           </h1>
           
           {/* Subtitle */}

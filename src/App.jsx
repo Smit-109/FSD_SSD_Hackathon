@@ -11,24 +11,39 @@ import { Toaster } from "react-hot-toast";
 
 function AppBody() {
   const dispatch = useDispatch();
-  const baseUrl = import.meta.env.VITE_BASE_URL;
+  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
   const { loading } = useAuth();
 
   useEffect(() => {
-    fetchBooks(`${baseUrl}/api/v1/books/all`);
-  }, []);
-
-  async function fetchBooks(url) {
-    try {
-      const res = await fetch(url);
-      const resJson = await res.json();
-      if (resJson.success) {
-        dispatch(updateBooks(resJson.data));
+    async function fetchBooks() {
+      try {
+        const url = `${baseUrl}/api/v1/books/all`;
+        console.log('Fetching books from:', url);
+        
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const resJson = await res.json();
+        console.log('API Response:', resJson);
+        
+        if (resJson.success) {
+          dispatch(updateBooks(resJson.data));
+        } else {
+          throw new Error(resJson.message || 'Failed to fetch books');
+        }
+      } catch (error) {
+        console.error("Failed to fetch books:", error);
+        // Load mock data as fallback
+        const { books } = await import("./utils/mockdata");
+        console.log('Loading mock data:', books);
+        dispatch(updateBooks(books));
       }
-    } catch (error) {
-      console.error("Failed to fetch books:", error);
     }
-  }
+
+    fetchBooks();
+  }, [baseUrl, dispatch]);
 
   if (loading) {
     return (

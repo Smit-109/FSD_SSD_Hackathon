@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addBook } from "../utils/store/slices/bookSlice";
-import Toaster from "./Toaster";
+import toast from "react-hot-toast";
 
 
 function AddBookForm() {
@@ -13,18 +13,19 @@ function AddBookForm() {
     releasedYear: "",
     rating: "",
     country: "",
+    publisher: "",
+    isbn: "",
+    pageCount: "",
+    language: "English",
     bookCover: null,
     pdf: null,
   });
   const dispatch = useDispatch();
-  const [showToaster, setShowToaster] = useState(false);
-  const [toasterMessage, setToasterMessage] = useState("");
-  const [toasterTextColorClass, setToasterTextColorClass] = useState("");
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const coverImageInput = useRef();
 
-  const baseUrl = import.meta.env.VITE_BASE_URL;
+  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
 
   useEffect(() => {
     async function fetchCategories() {
@@ -84,7 +85,7 @@ function AddBookForm() {
         throw new Error(response.message || 'Failed to add book');
       }
 
-      showToasterPopUp("Book added successfully!", "text-green-400");
+      toast.success("Book added successfully!");
       
       // Reset form
       setFormData({
@@ -95,6 +96,10 @@ function AddBookForm() {
         releasedYear: "",
         rating: "",
         country: "",
+        publisher: "",
+        isbn: "",
+        pageCount: "",
+        language: "English",
         bookCover: null,
         pdf: null,
       });
@@ -108,10 +113,7 @@ function AddBookForm() {
       dispatch(addBook(response.data));
 
     } catch (error) {
-      showToasterPopUp(
-        error.message || "Failed to add book. Please try again.",
-        "text-red-400"
-      );
+      toast.error(error.message || "Failed to add book. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -131,58 +133,58 @@ function AddBookForm() {
 
     for (const [field, label] of Object.entries(requiredFields)) {
       if (!formData[field] || formData[field].trim() === "") {
-        showToasterPopUp(`${label} is required!`, "text-red-400");
+        toast.error(`${label} is required!`);
         return true;
       }
     }
 
     if (!formData.category) {
-      showToasterPopUp("Please select a valid category!", "text-red-400");
+      toast.error("Please select a valid category!");
       return true;
     }
 
     // Book cover validation
     if (!formData.bookCover) {
-      showToasterPopUp("Book Cover Image is required!", "text-red-400");
+        toast.error("Book Cover Image is required!");
       return true;
     }
 
     if (!formData.bookCover.type.startsWith("image")) {
-      showToasterPopUp("Book Cover must be an image file!", "text-red-400");
+        toast.error("Book Cover must be an image file!");
       return true;
     }
 
     const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedImageTypes.includes(formData.bookCover.type)) {
-      showToasterPopUp("Book Cover must be JPG, PNG or WebP!", "text-red-400");
+        toast.error("Book Cover must be JPG, PNG or WebP!");
       return true;
     }
 
     if (formData.bookCover.size > 5 * 1024 * 1024) {
-      showToasterPopUp("Book Cover must be less than 5MB!", "text-red-400");
+        toast.error("Book Cover must be less than 5MB!");
       return true;
     }
 
     // PDF validation
     if (!formData.pdf) {
-      showToasterPopUp("Book PDF is required!", "text-red-400");
+        toast.error("Book PDF is required!");
       return true;
     }
 
     if (formData.pdf.type !== 'application/pdf') {
-      showToasterPopUp("Book file must be a PDF!", "text-red-400");
+        toast.error("Book file must be a PDF!");
       return true;
     }
 
     if (formData.pdf.size > 50 * 1024 * 1024) {
-      showToasterPopUp("PDF file must be less than 50MB!", "text-red-400");
+        toast.error("PDF file must be less than 50MB!");
       return true;
     }
 
     // Rating validation
     const rating = parseFloat(formData.rating);
     if (isNaN(rating) || rating < 0 || rating > 5) {
-      showToasterPopUp("Rating must be between 0 and 5!", "text-red-400");
+      toast.error("Rating must be between 0 and 5!");
       return true;
     }
 
@@ -190,24 +192,13 @@ function AddBookForm() {
     const year = parseInt(formData.releasedYear);
     const currentYear = new Date().getFullYear();
     if (isNaN(year) || year < 1800 || year > currentYear) {
-      showToasterPopUp(`Year must be between 1800 and ${currentYear}!`, "text-red-400");
+      toast.error(`Year must be between 1800 and ${currentYear}!`);
       return true;
     }
 
     return false;
   }
 
-  function showToasterPopUp(message, tailwindTextColorClass) {
-    setShowToaster(true);
-    setToasterMessage(message);
-    setToasterTextColorClass(tailwindTextColorClass);
-
-    setTimeout(() => {
-      setShowToaster(false);
-      setToasterMessage("");
-      setToasterTextColorClass("");
-    }, 2000);
-  }
 
   return (
     <section className="px-3">
@@ -308,6 +299,47 @@ function AddBookForm() {
               className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
             />
           </article>
+          <article className="flex flex-col gap-y-1">
+            <label className="font-semibold">Publisher (Optional)</label>
+            <input
+              name="publisher"
+              value={formData.publisher}
+              onChange={(e) => handleDataChange(e)}
+              type="text"
+              className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
+            />
+          </article>
+          <article className="flex flex-col gap-y-1">
+            <label className="font-semibold">ISBN (Optional)</label>
+            <input
+              name="isbn"
+              value={formData.isbn}
+              onChange={(e) => handleDataChange(e)}
+              type="text"
+              className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
+            />
+          </article>
+          <article className="flex flex-col gap-y-1">
+            <label className="font-semibold">Page Count (Optional)</label>
+            <input
+              name="pageCount"
+              value={formData.pageCount}
+              onChange={(e) => handleDataChange(e)}
+              type="number"
+              className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
+            />
+          </article>
+          <article className="flex flex-col gap-y-1">
+            <label className="font-semibold">Language</label>
+            <input
+              name="language"
+              value={formData.language}
+              onChange={(e) => handleDataChange(e)}
+              type="text"
+              className="w-full outline-none border-2 border-sky-900 rounded-md ps-1 py-1 pe-2"
+              placeholder="English"
+            />
+          </article>
           <button
             type="submit"
             className="flex items-center gap-x-3 mt-4 text-[15px] bg-blue-900 text-white w-fit self-center py-2 px-10 rounded-md">
@@ -318,12 +350,6 @@ function AddBookForm() {
           </button>
         </form>
       </section>
-      {showToaster && (
-        <Toaster
-          message={toasterMessage}
-          textColorClass={toasterTextColorClass}
-        />
-      )}
     </section>
   );
 }

@@ -4,11 +4,15 @@ import mongoose from "mongoose";
 import booksRouter from "./routes/books.routes.js";
 import categoriesRouter from "./routes/categories.routes.js";
 import authRouter from "./routes/auth.routes.js";
+import editBookRouter from "./routes/edit-book.routes.js";
 import cors from "cors";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from 'url';
+
+// Suppress Mongoose strictQuery deprecation warning
+mongoose.set('strictQuery', true);
 
 // Import database connection and models
 import { connectDB } from './models/index.js';
@@ -17,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const corsOptions = ({
-    origin: ["http://localhost:5173", "http://localhost:3000", "https://online-library-system-mmj030703.onrender.com"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "https://online-library-system-mmj030703.onrender.com"],
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -29,8 +33,6 @@ async function startServer() {
 
     // Serve static files
     server.use('/public', express.static(path.join(__dirname, 'public')));
-    server.use('/static', express.static(path.join(__dirname, 'public')));
-    server.use('/uploads', express.static(path.join(__dirname, 'public/books')));
 
     // Connect to database with retry logic
     await connectDB();
@@ -58,9 +60,10 @@ async function startServer() {
     });
 
     // Mount API routes
-    server.use("/api/v1/books", booksRouter);
-    server.use("/api/v1/categories", categoriesRouter);
     server.use("/api/v1/auth", authRouter);
+    server.use("/api/v1/categories", categoriesRouter);
+    server.use("/api/v1/books", booksRouter);
+    server.use("/api/v1/books/edit", editBookRouter);
 
     // Not found handler
     server.use((req, res) => {
@@ -73,6 +76,6 @@ async function startServer() {
 
 // Start the server
 startServer().catch(error => {
-    console.error(' Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
 });

@@ -196,9 +196,9 @@ export async function getAllBooks(req, res) {
         const mappedBooks = books.map(book => ({
             _id: book._id,
             title: book.title,
-            author: book.author.primary,
+            author: book.author?.primary,
             category: book.category?.name || book.genre,
-            imageSrc: book.files?.coverImage ? `/public${book.files.coverImage}` : null,
+            imageSrc: book.files?.coverImage || null,
             description: book.description?.short,
             rating: book.rating?.average || 0
         }));
@@ -227,9 +227,275 @@ export async function getAllBooks(req, res) {
 }
 
 export async function getBookByID(req, res) {
+  try {
+    const { id: bookId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({ 
+        success: false,
+        errorCode: "MONGODB_ID_ERROR", 
+        message: "Provided book id is an invalid mongodb id!" 
+      });
+    }
+
+    const book = await Book.findById(bookId)
+      .populate('category', 'name')
+      .populate('metadata.addedBy', 'fullName email');
+
+    if (!book) {
+      return res.status(404).json({ 
+        success: false,
+        errorCode: "BOOK_NOT_FOUND", 
+        message: "Book not found!" 
+      });
+    }
+
+    // Increment view count
+    await book.incrementViewCount();
+
+    // Format book data for frontend
+    const formattedBook = {
+      _id: book._id,
+      title: book.title,
+      author: book.author?.primary,
+      description: book.description?.full || book.description?.short,
+      category: book.category?.name || book.genre,
+      imageSrc: book.files?.coverImage || null,
+      files: {
+        coverImage: book.files?.coverImage || null,
+        pdf: book.files?.pdf || null
+      },
+      rating: book.rating?.average || 0,
+      releasedYear: book.publishingInfo?.year,
+      publisher: book.publishingInfo?.publisher,
+      pageCount: book.physicalInfo?.pageCount,
+      language: book.physicalInfo?.language,
+      addedBy: book.metadata?.addedBy,
+      tags: book.metadata?.tags,
+      viewCount: book.statistics?.viewCount,
+      downloadCount: book.statistics?.downloadCount,
+      isbn: book.metadata?.isbn,
+      country: book.publishingInfo?.country
+    };
+
+    return res.status(200).json({ 
+      success: true, 
+      data: formattedBook 
+    });
+  } catch (error) {
+    console.error("Get book by ID error:", error);
+    return res.status(500).json({ 
+      success: false,
+      error: error.message || error, 
+      errorCode: "GET_BOOK_BY_ID_ERROR", 
+      message: "Something went wrong!" 
+    });
+  }
+}
+
+export async function updateBook(req, res) {
+    const { id: bookId } = req.params;
+    const uploadedFiles = [];
+
+    try {
+        // Validate book existence
+        const existingBook = await Book.findById(bookId).populate('category');
+        if (!existingBook) {
+            return res.status(404).json({
+                success: false,
+                message: "Book not found"
+            });
+        }
+
+        // Extract form data
+        const {
+            title,
+            author,
+            description,
+            category,
+            releasedYear,
+            rating,
+            country,
+            isbn,
+            pageCount,
+            language,
+            publisher
+        } = req.body;
+
+        // Log received data for debugging
+        console.log('Update book request body:', req.body);
+        console.log('Update book files:', req.files);
+
+        // Validate required fields - handle both string and non-string values
+        const requiredFields = { title, author, description, category, releasedYear };
+        const missingFields = Object.entries(requiredFields)
+            .filter(([_, value]) => {
+                if (value === null || value === undefined) return true;
+                if (typeof value === 'string' && value.trim() === "") return true;
+                return false;
+            })
+            .map(([field]) => field);
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                errorCode: "FIELDS_MISSING",
+                message: `Required fields missing: ${missingFields.join(', ')}`
+            });
+        }
+
+        // Handle file updates - only update fields that are provided
+        let updates = {};
+        
+        if (title) updates.title = title;
+        if (author) updates['author.primary'] = author;
+        if (description) {
+            updates['description.short'] = description;
+            updates['description.full'] = description;
+        }
+        if (releasedYear) {
+            const year = parseInt(releasedYear);
+            if (!isNaN(year)) {
+                updates['publishingInfo.year'] = year;
+            }
+        }
+        if (country) updates['publishingInfo.country'] = country;
+        if (publisher) updates['publishingInfo.publisher'] = publisher;
+        if (isbn) updates['metadata.isbn'] = isbn;
+        if (pageCount) {
+            const pages = parseInt(pageCount);
+            if (!isNaN(pages) && pages > 0) {
+                updates['physicalInfo.pageCount'] = pages;
+            }
+        }
+        if (language) updates['physicalInfo.language'] = language;
+        if (rating !== undefined && rating !== null && rating !== '') {
+            const ratingValue = parseFloat(rating);
+            if (!isNaN(ratingValue)) {
+                updates['rating.average'] = ratingValue;
+            }
+        }
+
+        // Handle category update - normalize category name for comparison
+        if (category) {
+            const categoryName = typeof category === 'string' ? category.trim().toLowerCase() : category;
+            const existingCategoryName = existingBook.category?.name?.toLowerCase() || existingBook.genre?.toLowerCase();
+            
+            // Always update category if provided (even if same, to ensure consistency)
+            let categoryDoc = await Category.findOne({
+                name: { $regex: new RegExp(`^${categoryName}$`, 'i') }
+            });
+
+            if (!categoryDoc) {
+                categoryDoc = await Category.create({
+                    name: categoryName,
+                    slug: categoryName.replace(/\s+/g, '-')
+                });
+            }
+
+            updates.category = categoryDoc._id;
+            updates.genre = categoryName;
+        }
+
+        // Handle file uploads
+        if (req.files?.bookCover?.[0]) {
+            const bookCover = req.files.bookCover[0];
+            const coverPath = `/books/covers/${bookCover.filename}`;
+            const imageSrc = `/public${coverPath}`;
+            updates['files.coverImage'] = imageSrc;
+            uploadedFiles.push(bookCover.path);
+
+            // Delete old cover if exists
+            if (existingBook.files?.coverImage) {
+                try {
+                    const oldPath = existingBook.files.coverImage.replace('/public', '');
+                    await deleteFile(oldPath);
+                } catch (error) {
+                    console.error("Error deleting old cover:", error);
+                }
+            }
+        }
+
+        if (req.files?.pdf?.[0]) {
+            const pdf = req.files.pdf[0];
+            const pdfPath = `/books/pdfs/${pdf.filename}`;
+            const pdfSrc = `/public${pdfPath}`;
+            updates['files.pdf'] = pdfSrc;
+            uploadedFiles.push(pdf.path);
+
+            // Delete old PDF if exists
+            if (existingBook.files?.pdf) {
+                try {
+                    const oldPath = existingBook.files.pdf.replace('/public', '');
+                    await deleteFile(oldPath);
+                } catch (error) {
+                    console.error("Error deleting old PDF:", error);
+                }
+            }
+        }
+
+        // Check if there are any updates to apply
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No fields to update"
+            });
+        }
+
+        console.log('Applying updates:', updates);
+
+        // Update book
+        const updatedBook = await Book.findByIdAndUpdate(
+            bookId,
+            { $set: updates },
+            { 
+                new: true,
+                runValidators: true
+            }
+        ).populate('category');
+
+        if (!updatedBook) {
+            // Clean up uploaded files if update fails
+            for (const filePath of uploadedFiles) {
+                try {
+                    await fs.unlink(filePath);
+                } catch (error) {
+                    console.error("Error cleaning up file:", error);
+                }
+            }
+
+            throw new Error("Failed to update book");
+        }
+
+        console.log('Book updated successfully:', updatedBook._id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Book updated successfully",
+            data: updatedBook
+        });
+
+    } catch (error) {
+        // Clean up any uploaded files
+        for (const filePath of uploadedFiles) {
+            try {
+                await fs.unlink(filePath);
+            } catch (err) {
+                console.error("Error cleaning up file:", err);
+            }
+        }
+
+        console.error("Error updating book:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update book"
+        });
+    }
+}export async function deleteBook(req, res) {
     try {
         const { id: bookId } = req.params;
 
+        // Validate book ID
         if (!mongoose.isValidObjectId(bookId)) {
             return res.status(400).json({ 
                 success: false,
@@ -238,9 +504,10 @@ export async function getBookByID(req, res) {
             });
         }
 
-        const book = await Book.findById(bookId).populate('addedBy', 'fullName email');
+        // Find and delete the book
+        const deletedBook = await Book.findByIdAndDelete(bookId);
 
-        if (!book) {
+        if (!deletedBook) {
             return res.status(404).json({ 
                 success: false,
                 errorCode: "BOOK_NOT_FOUND", 
@@ -248,19 +515,18 @@ export async function getBookByID(req, res) {
             });
         }
 
-        // Increment view count
-        await book.incrementViewCount();
-
-        return res.status(200).json({ 
-            success: true, 
-            data: book 
+        res.status(200).json({ 
+            success: true,
+            message: "Book deleted successfully",
+            data: deletedBook
         });
     } catch (error) {
+        console.error("Delete book error:", error);
         return res.status(500).json({ 
             success: false,
             error: error.message || error, 
-            errorCode: "GET_BOOK_BY_ID_ERROR", 
-            message: "Something went wrong!" 
+            errorCode: "DELETE_BOOK_ERROR", 
+            message: "An error occurred while deleting book!" 
         });
     }
 }
@@ -269,22 +535,41 @@ export async function getBooksByCategory(req, res) {
     try {
         const { category } = req.params;
 
-        if (category.trim() === "") {
-            return res.status(400).json({ errorCode: "CATEGORY_MISSING", message: "Category is missing !" });
+        if (!category || category.trim() === "") {
+            return res.status(400).json({ 
+                success: false,
+                errorCode: "CATEGORY_MISSING", 
+                message: "Category is missing !" 
+            });
         }
 
-        console.log(category)
-
         const books = await Book.find({
-            category
+            genre: { $regex: new RegExp(`^${category}$`, 'i') }
+        }).populate('category', 'name');
+
+        // Map the books to match frontend expectations
+        const mappedBooks = books.map(book => ({
+            _id: book._id,
+            title: book.title,
+            author: book.author?.primary,
+            category: book.category?.name || book.genre,
+            imageSrc: book.files?.coverImage || null,
+            description: book.description?.short,
+            rating: book.rating?.average || 0
+        }));
+
+        res.status(200).json({ 
+            success: true, 
+            data: mappedBooks 
         });
-
-        console.log(books);
-
-
-        res.status(200).send({ status: "success", data: books });
     } catch (error) {
-        return res.status(500).json({ error: error.message || error, errorCode: "GET_BOOKS_BY_CATEGORY", message: "Internal Server Error !" });
+        console.error("Get books by category error:", error);
+        return res.status(500).json({ 
+            success: false,
+            error: error.message || error, 
+            errorCode: "GET_BOOKS_BY_CATEGORY_ERROR", 
+            message: "Internal Server Error !" 
+        });
     }
 }
 
@@ -292,24 +577,45 @@ export async function getBooksBySearch(req, res) {
     try {
         const { q } = req.query;
 
-        if (q.trim() === "") {
-            return res.status(400).json({ errorCode: "SEARCH_EMPTY", message: "Search is empty !" });
+        if (!q || q.trim() === "") {
+            return res.status(400).json({ 
+                success: false,
+                errorCode: "SEARCH_EMPTY", 
+                message: "Search query is empty !" 
+            });
         }
 
-        const books = await Book.aggregate([
-            {
-                $search: {
-                    index: "books-search",
-                    text: {
-                        query: q,
-                        path: ["title", "author"]
-                    }
-                }
-            },
-        ])
+        const books = await Book.find({
+            $or: [
+                { title: { $regex: q, $options: 'i' } },
+                { 'author.primary': { $regex: q, $options: 'i' } },
+                { 'description.short': { $regex: q, $options: 'i' } },
+                { 'metadata.tags': { $in: [new RegExp(q, 'i')] } }
+            ]
+        }).populate('category', 'name');
 
-        res.status(200).send({ status: "success", data: books });
+        // Map the books to match frontend expectations
+        const mappedBooks = books.map(book => ({
+            _id: book._id,
+            title: book.title,
+            author: book.author?.primary,
+            category: book.category?.name || book.genre,
+            imageSrc: book.files?.coverImage || null,
+            description: book.description?.short,
+            rating: book.rating?.average || 0
+        }));
+
+        res.status(200).json({ 
+            success: true, 
+            data: mappedBooks 
+        });
     } catch (error) {
-        return res.status(500).json({ error: error.message || error, errorCode: "GET_BOOKS_BY_CATEGORY", message: "Internal Server Error !" });
+        console.error("Search books error:", error);
+        return res.status(500).json({ 
+            success: false,
+            error: error.message || error, 
+            errorCode: "SEARCH_BOOKS_ERROR", 
+            message: "Internal Server Error !" 
+        });
     }
 }

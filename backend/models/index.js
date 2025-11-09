@@ -14,7 +14,8 @@ import AuditLog from './auditLog.models.js';
 const connectDB = async (retries = 5) => {
     for (let i = 0; i < retries; i++) {
         try {
-            const mongoURI = `${process.env.MONGODB_URI}/${process.env.DATABASE_NAME}`;
+            // Use MONGODB_URI directly as it already includes the database name
+            const mongoURI = process.env.MONGODB_URI;
             
             const conn = await mongoose.connect(mongoURI, {
                 useNewUrlParser: true,

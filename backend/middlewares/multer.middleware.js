@@ -47,8 +47,9 @@ const fileFilter = (req, file, cb) => {
 
     const fileConfig = allowedFiles[file.fieldname];
     
+    // If fieldname is not a recognized file field, reject it (shouldn't happen with our setup)
     if (!fileConfig) {
-        cb(new Error(`Invalid field name: ${file.fieldname}`));
+        cb(new Error(`Invalid field name: ${file.fieldname}. Only 'bookCover' and 'pdf' are allowed`));
         return;
     }
 
