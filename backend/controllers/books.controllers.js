@@ -96,7 +96,8 @@ export async function addBook(req, res) {
             },
             files: {
                 coverImage: imageSrc,
-                pdf: pdfSrc
+                pdfPath: pdfSrc,
+                pdfSrc: pdfSrc
             },
             rating: {
                 average: rating ? parseFloat(rating) : 0,
@@ -200,7 +201,11 @@ export async function getAllBooks(req, res) {
             category: book.category?.name || book.genre,
             imageSrc: book.files?.coverImage || null,
             description: book.description?.short,
-            rating: book.rating?.average || 0
+            rating: book.rating?.average || 0,
+            files: {
+                coverImage: book.files?.coverImage || null,
+                pdf: book.files?.pdfPath || book.files?.pdfSrc || null
+            }
         }));
 
         const total = await Book.countDocuments(query);
@@ -263,7 +268,7 @@ export async function getBookByID(req, res) {
       imageSrc: book.files?.coverImage || null,
       files: {
         coverImage: book.files?.coverImage || null,
-        pdf: book.files?.pdf || null
+        pdf: book.files?.pdfPath || book.files?.pdfSrc || null
       },
       rating: book.rating?.average || 0,
       releasedYear: book.publishingInfo?.year,
@@ -420,13 +425,14 @@ export async function updateBook(req, res) {
             const pdf = req.files.pdf[0];
             const pdfPath = `/books/pdfs/${pdf.filename}`;
             const pdfSrc = `/public${pdfPath}`;
-            updates['files.pdf'] = pdfSrc;
+            updates['files.pdfPath'] = pdfSrc;
+            updates['files.pdfSrc'] = pdfSrc;
             uploadedFiles.push(pdf.path);
 
             // Delete old PDF if exists
-            if (existingBook.files?.pdf) {
+            if (existingBook.files?.pdfPath || existingBook.files?.pdfSrc) {
                 try {
-                    const oldPath = existingBook.files.pdf.replace('/public', '');
+                    const oldPath = (existingBook.files?.pdfPath || existingBook.files?.pdfSrc).replace('/public', '');
                     await deleteFile(oldPath);
                 } catch (error) {
                     console.error("Error deleting old PDF:", error);

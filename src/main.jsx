@@ -13,7 +13,6 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
-import FavoritesPage from './pages/FavoritesPage.jsx';
 import { RouterProvider } from 'react-router-dom';
 import Error from './components/Error.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -60,17 +59,9 @@ const appRouter = createBrowserRouter([
         )
       },
       {
-        path: "/favorites",
-        element: (
-          <ProtectedRoute>
-            <FavoritesPage />
-          </ProtectedRoute>
-        )
-      },
-      {
         path: "/add-book",
         element: (
-          <ProtectedRoute requireVerification={true}>
+          <ProtectedRoute requireAdmin={true}>
             <AddBookForm />
           </ProtectedRoute>
         )

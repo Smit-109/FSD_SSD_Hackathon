@@ -1,9 +1,13 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from 'url';
 
-// Define base upload directory
-const baseUploadDir = path.join(process.cwd(), 'backend', 'public', 'books');
+// Define base upload directory - use __dirname to get the middleware's directory
+// Then navigate to parent (backend) then to public/books
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const baseUploadDir = path.join(__dirname, '..', 'public', 'books');
 
 // Ensure upload directories exist
 const uploadDirs = {

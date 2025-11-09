@@ -9,7 +9,6 @@ import {
   LogOut, 
   Settings, 
   Shield,
-  Heart,
   Plus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -65,14 +64,7 @@ function Header() {
             </Link>
             {isAuthenticated && (
               <>
-                <Link 
-                  to="/favorites" 
-                  className="text-dark-600 hover:text-primary-600 font-medium transition-colors duration-200 flex items-center space-x-1"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span>Favorites</span>
-                </Link>
-                {(isAdmin || user?.isVerified) && (
+                {isAdmin && (
                   <Link 
                     to="/add-book" 
                     className="text-dark-600 hover:text-primary-600 font-medium transition-colors duration-200 flex items-center space-x-1"
@@ -182,14 +174,7 @@ function Header() {
               </Link>
               {isAuthenticated && (
                 <>
-                  <Link 
-                    to="/favorites" 
-                    className="text-dark-600 hover:text-primary-600 font-medium transition-colors duration-200 py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    My Favorites
-                  </Link>
-                  {(isAdmin || user?.isVerified) && (
+                  {isAdmin && (
                     <Link 
                       to="/add-book" 
                       className="text-dark-600 hover:text-primary-600 font-medium transition-colors duration-200 py-2"

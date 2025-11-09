@@ -84,7 +84,6 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   preferences: {
-    favoriteGenres: [{ type: String }],
     language: { type: String, default: 'English' },
     emailNotifications: { type: Boolean, default: true },
     smsNotifications: { type: Boolean, default: false }
@@ -108,10 +107,6 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   readBooks: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Book'
-  }],
-  favoriteBooks: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Book'
   }],

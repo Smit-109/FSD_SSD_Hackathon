@@ -149,7 +149,6 @@ export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate('readBooks')
-      .populate('favoriteBooks')
       .populate('requestedBooks.book');
 
     res.status(200).json({
@@ -163,7 +162,6 @@ export const getUserProfile = async (req, res) => {
           isVerified: user.isVerified,
           avatar: user.avatar,
           readBooks: user.readBooks,
-          favoriteBooks: user.favoriteBooks,
           requestedBooks: user.requestedBooks
         }
       }
@@ -245,30 +243,6 @@ export const requestBookAccess = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Book access requested successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-// Add to favorites
-export const addToFavorites = async (req, res) => {
-  try {
-    const { bookId } = req.body;
-    const user = await User.findById(req.user.id);
-
-    if (!user.favoriteBooks.includes(bookId)) {
-      user.favoriteBooks.push(bookId);
-      await user.save();
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Book added to favorites'
     });
   } catch (error) {
     res.status(500).json({

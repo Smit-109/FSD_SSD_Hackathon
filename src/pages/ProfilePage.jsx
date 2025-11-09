@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Mail, Calendar, Shield, Heart, BookOpen, Edit } from 'lucide-react';
+import { User, Mail, Calendar, Shield, BookOpen, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
@@ -198,16 +198,6 @@ const ProfilePage = () => {
               <h3 className="text-lg font-semibold text-dark-900 mb-4">Library Stats</h3>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-dark-600">Favorite Books</span>
-                  </div>
-                  <span className="text-sm font-medium text-dark-900">
-                    {user?.favoriteBooks?.length || 0}
-                  </span>
-                </div>
-
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <BookOpen className="h-4 w-4 text-blue-500" />

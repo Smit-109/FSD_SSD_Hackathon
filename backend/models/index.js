@@ -9,6 +9,7 @@ import Reservation from './reservation.models.js';
 import ReadingSession from './readingSession.models.js';
 import Notification from './notification.models.js';
 import AuditLog from './auditLog.models.js';
+import PopularBook from './popularBooks.models.js';
 
 // Database connection with retry logic
 const connectDB = async (retries = 5) => {
@@ -163,7 +164,8 @@ export {
     Reservation,
     ReadingSession,
     Notification,
-    AuditLog
+    AuditLog,
+    PopularBook
 };
 
 export default {
@@ -177,6 +179,7 @@ export default {
         Reservation,
         ReadingSession,
         Notification,
-        AuditLog
+        AuditLog,
+        PopularBook
     }
 };

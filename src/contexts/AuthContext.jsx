@@ -138,18 +138,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const addToFavorites = async (bookId) => {
-    try {
-      const response = await axios.post('/api/v1/auth/favorites', { bookId });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Failed to add to favorites' 
-      };
-    }
-  };
-
   const value = {
     user,
     loading,
@@ -158,7 +146,6 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     requestBookAccess,
-    addToFavorites,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     isVerified: user?.isVerified

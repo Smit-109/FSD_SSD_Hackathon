@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BreadCrumb from "./BreadCrumb";
 import { useAuth } from "../contexts/AuthContext";
 import { Edit, Trash2, BookOpen } from "lucide-react";
+import PDFViewer from "./PDFViewer";
 
 const placeholderImages = [
   'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&h=600&fit=crop',
@@ -25,6 +26,7 @@ function BookDetails() {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
   const { bookId } = useParams();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -80,20 +82,21 @@ function BookDetails() {
   }
 
   function handleReadBook() {
-    // Check for PDF file in the correct location
-    const pdfPath = book?.files?.pdf || book?.pdf;
+    const pdfPath = book?.files?.pdfPath || book?.files?.pdfSrc || book?.files?.pdf || book?.pdf;
     if (!pdfPath) {
       alert("PDF file not available for this book.");
       return;
     }
+    setShowPDFViewer(true);
+  }
+
+  function getPdfUrl() {
+    const pdfPath = book?.files?.pdfPath || book?.files?.pdfSrc || book?.files?.pdf || book?.pdf;
+    if (!pdfPath) return null;
     
-    // Construct the full URL for the PDF
-    const pdfUrl = pdfPath.startsWith('http') 
+    return pdfPath.startsWith('http') 
       ? pdfPath 
       : `${baseUrl}${pdfPath.startsWith('/') ? '' : '/'}${pdfPath}`;
-    
-    // Open the PDF in a new tab
-    window.open(pdfUrl, '_blank');
   }
 
   if (loading) {
@@ -137,6 +140,13 @@ function BookDetails() {
 
   return (
     <section className="px-4 py-8">
+      {showPDFViewer && (
+        <PDFViewer 
+          pdfUrl={getPdfUrl()} 
+          title={title}
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
       <div className="max-w-6xl mx-auto">
         {book && <BreadCrumb book={book} category={category} />}
         {book ? (

@@ -170,4 +170,48 @@ router.put('/:bookId', protect, adminOnly, uploadBookFiles, validateBook, async 
     }
 });
 
+router.post('/:bookId/upload-pdf', protect, adminOnly, uploadBookFiles, async (req, res) => {
+    try {
+        const { bookId } = req.params;
+
+        const book = await Book.findById(bookId);
+        if (!book) {
+            return res.status(404).json({
+                success: false,
+                message: 'Book not found'
+            });
+        }
+
+        if (!req.files?.pdf?.[0]) {
+            return res.status(400).json({
+                success: false,
+                message: 'PDF file is required'
+            });
+        }
+
+        const pdf = req.files.pdf[0];
+        const pdfPath = `/books/pdfs/${pdf.filename}`;
+        const pdfSrc = `/public${pdfPath}`;
+
+        book.files.pdf = pdfSrc;
+        await book.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'PDF uploaded successfully',
+            data: {
+                _id: book._id,
+                title: book.title,
+                pdfPath: book.files.pdf
+            }
+        });
+    } catch (error) {
+        console.error('Error uploading PDF:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error uploading PDF'
+        });
+    }
+});
+
 export default router;

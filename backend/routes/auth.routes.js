@@ -5,7 +5,6 @@ import {
   getUserProfile,
   updateUserProfile,
   requestBookAccess,
-  addToFavorites,
   getAllUsers,
   manageBookRequest,
   verifyUser
@@ -27,7 +26,6 @@ router.post('/login', validateLogin, loginUser);
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 router.post('/request-book', protect, validateBookRequest, requestBookAccess);
-router.post('/favorites', protect, addToFavorites);
 
 // Admin routes
 router.get('/users', protect, adminOnly, getAllUsers);

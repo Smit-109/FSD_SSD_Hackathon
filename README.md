@@ -113,7 +113,7 @@ Ensure you have the following installed:
 ## Usage
 
 1. Open the application and browse the library to view available books by category.
-2. Users can use the "Add Book" link in the navbar to add new books to the collection.
+2. Admin users can use the "Add Book" link in the navbar to add new books to the collection.
 3. Click on a book to view its detailed information.
 4. Use the search bar on the browse page to locate books by title or author.
 

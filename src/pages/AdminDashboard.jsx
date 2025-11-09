@@ -11,10 +11,12 @@ import {
   Filter,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  Star
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import PopularBooksManager from '../components/PopularBooksManager';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -222,10 +224,10 @@ const AdminDashboard = () => {
         {/* Tabs */}
         <div className="mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex space-x-8 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('users')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'users'
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -235,7 +237,7 @@ const AdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('books')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'books'
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -244,8 +246,19 @@ const AdminDashboard = () => {
                 Book Management
               </button>
               <button
+                onClick={() => setActiveTab('popular')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center ${
+                  activeTab === 'popular'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Star className="h-4 w-4 mr-1" />
+                Popular Books
+              </button>
+              <button
                 onClick={() => setActiveTab('requests')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'requests'
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -447,6 +460,11 @@ const AdminDashboard = () => {
               </table>
             </div>
           </div>
+        )}
+
+        {/* Popular Books Management Tab */}
+        {activeTab === 'popular' && (
+          <PopularBooksManager />
         )}
 
         {/* Book Requests Tab */}

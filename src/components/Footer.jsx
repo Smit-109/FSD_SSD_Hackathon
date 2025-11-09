@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, Mail, Phone, MapPin, Github, Twitter, Facebook } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 function Footer() {
     const currentYear = new Date().getFullYear();
+    const { isAdmin } = useAuth();
     
     return (
         <footer className="bg-dark-900 text-white mt-20">
@@ -46,16 +48,13 @@ function Footer() {
                                     Browse Books
                                 </Link>
                             </li>
-                            <li>
-                                <Link to="/favorites" className="text-gray-300 hover:text-primary-400 transition-colors text-sm">
-                                    My Favorites
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/add-book" className="text-gray-300 hover:text-primary-400 transition-colors text-sm">
-                                    Add Book
-                                </Link>
-                            </li>
+                            {isAdmin && (
+                                <li>
+                                    <Link to="/add-book" className="text-gray-300 hover:text-primary-400 transition-colors text-sm">
+                                        Add Book
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
                     </div>
 

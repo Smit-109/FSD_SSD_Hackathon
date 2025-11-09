@@ -211,14 +211,6 @@ webRouter.get('/profile', requireAuth, (req, res) => {
     });
 });
 
-// Favorites page (protected)
-webRouter.get('/favorites', requireAuth, (req, res) => {
-    res.render('favorites', { 
-        user: req.session.user,
-        favorites: [] // Fetch user's favorite books from database
-    });
-});
-
 // Admin panel (protected - admin only)
 webRouter.get('/admin', requireAdmin, (req, res) => {
     res.render('admin', { 

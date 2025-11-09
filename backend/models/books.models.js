@@ -133,7 +133,6 @@ const bookSchema = new mongoose.Schema({
     statistics: {
         viewCount: { type: Number, default: 0 },
         downloadCount: { type: Number, default: 0 },
-        favoriteCount: { type: Number, default: 0 },
         shareCount: { type: Number, default: 0 },
         averageReadingTime: { type: Number, default: 0 }, // in minutes
         completionRate: { type: Number, default: 0 } // percentage

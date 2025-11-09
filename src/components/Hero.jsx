@@ -37,10 +37,6 @@ function Hero() {
                   <BookOpen className="h-5 w-5" />
                   <span>Browse Library</span>
                 </Link>
-                <Link to="/favorites" className="btn-secondary flex items-center space-x-2">
-                  <Star className="h-5 w-5" />
-                  <span>My Favorites</span>
-                </Link>
               </>
             ) : (
               <>
