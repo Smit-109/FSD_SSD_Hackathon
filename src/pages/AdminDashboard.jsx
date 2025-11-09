@@ -84,7 +84,7 @@ const AdminDashboard = () => {
 
 
   const handleEditBook = (bookId) => {
-    navigate(`/admin/books/edit/${bookId}`);
+    navigate(`/books/edit/${bookId}`);
   };
 
   const handleDeleteBook = async (bookId) => {

@@ -66,7 +66,7 @@ function EditBookForm({ book: initialBook, onCancel }) {
             language: book.physicalInfo?.language || "English",
             bookCover: null,
             pdf: null,
-            currentPdf: book.files?.pdf || "" // Set current PDF file path
+            currentPdf: book.files?.pdfPath || book.files?.pdfSrc || book.files?.pdf || ""
           });
           
           // Set current cover image for display
